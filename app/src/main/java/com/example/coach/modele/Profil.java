@@ -14,7 +14,7 @@ import java.util.Date;
  * Classe métier Profil
  * contient les informations du profil
  */
-public class Profil implements Serializable {
+public class Profil implements Serializable, Comparable<Profil> {
 
     // constantes
     private static final Integer minFemme = 15; // maigre si en dessous
@@ -119,5 +119,16 @@ public class Profil implements Serializable {
         }
         return jsonProfil;
     }
+
+    /**
+     * Comparaison des profils sur dateMesure
+     * @param o
+     * @return le résultat de la comparaison
+     */
+    @Override
+    public int compareTo(Profil o) {
+        return dateMesure.compareTo(o.getDateMesure());
+    }
+
 
 }

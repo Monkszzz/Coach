@@ -1,16 +1,10 @@
 package com.example.coach.controleur;
 
-import android.content.Context;
-
+import android.util.Log;
 import com.example.coach.modele.AccesDistant;
-import com.example.coach.modele.AccesLocal;
 import com.example.coach.modele.Profil;
-import com.example.coach.outils.Serializer;
-import com.example.coach.vue.MainActivity;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
-
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -19,30 +13,26 @@ import java.util.Date;
 public final class Controle {
 
     private static Controle instance;
-    private static Profil profil;
+    private ArrayList<Profil> lesProfils = new ArrayList<Profil>();
     private static String nomFic = "saveprofil";
-    //    private AccesLocal accesLocal;
     private static AccesDistant accesDistant;
-    private static Context context;
 
-    private Controle(Context context) {
-//        recupSerialize(context);
-//        accesLocal = AccesLocal.getInstance(context);
-//        profil = accesLocal.recupDernier();
-        if (context != null) {
-            this.context = context;
-        }
+    /**
+     * Constructeur : récupère un contexte
+     */
+    private Controle() {
+        super();
     }
 
     /**
      * Création d'une instance unique de la classe
      * @return l'instance unique
      */
-    public final static Controle getInstance(Context context) {
+    public final static Controle getInstance() {
         if(instance == null){
-            instance = new Controle(context);
+            instance = new Controle();
             accesDistant = AccesDistant.getInstance();
-            accesDistant.envoi("dernier", new JSONObject());
+            accesDistant.envoi("tous", new JSONObject());
         }
         return instance;
     }
@@ -55,99 +45,59 @@ public final class Controle {
      * @param sexe 1 pour homme, 0 pour femme
      */
     public void creerProfil(Integer poids, Integer taille, Integer age, Integer sexe) {
-        profil = new Profil(new Date(), poids, taille, age, sexe);
-        accesDistant.envoi("enreg", profil.convertToJSONObject());
-//        accesLocal.ajout(profil);
-//        Serializer.serialize(nomFic, profil, context);
+        Profil unProfil = new Profil(new Date(), poids, taille, age, sexe);
+        lesProfils.add(unProfil);
+        accesDistant.envoi("enreg", unProfil.convertToJSONObject());
+        accesDistant.envoi("tous", new JSONObject());
     }
 
     /**
-     * getter sur le résultat du calcul de l'IMG pour le profil
+     * getter sur le résultat du calcul de l'IMG du dernier profil
      * @return img du profil
      */
     public float getImg() {
-        if(profil != null) {
-            return profil.getImg();
+        if(lesProfils.size() > 0) {
+            return lesProfils.get(lesProfils.size()-1).getImg();
         }else{
             return 0;
         }
     }
 
     /**
-     * getter sur le message correspondant à l'img du profil
+     * getter sur le message correspondant à l'img du dernier profil
      * @return message du profil
      */
     public String getMessage() {
-        if(profil != null) {
-            return profil.getMessage();
+        if(lesProfils.size() > 0) {
+            return lesProfils.get(lesProfils.size()-1).getMessage();
         }else{
             return "";
         }
     }
 
     /**
-     * Retourne le poids si le profil existe
-     * @return
+     * getter sur lesPRofils
+     * @return lesProfils
      */
-    public Integer getPoids(){
-        if(profil == null){
-            return null;
-        }else{
-            return profil.getPoids();
-        }
+    public ArrayList<Profil> getLesProfils() {
+        return lesProfils;
     }
 
     /**
-     * Retourne la taille si le profil existe
-     * @return
+     * setter sur lesProfils
+     * @param lesProfils
      */
-    public Integer getTaille(){
-        if(profil == null){
-            return null;
-        }else{
-            return profil.getTaille();
-        }
+    public void setLesProfils(ArrayList<Profil> lesProfils) {
+        this.lesProfils = lesProfils;
     }
 
     /**
-     * Retourne l'âge si le profil existe
-     * @return
-     */
-    public Integer getAge(){
-        if(profil == null){
-            return null;
-        }else{
-            return profil.getAge();
-        }
-    }
-
-    /**
-     * Retourne le sexe si le profil existe
-     * @return
-     */
-    public Integer getSexe(){
-        if(profil == null){
-            return null;
-        }else{
-            return profil.getSexe();
-        }
-    }
-
-    /**
-     * Récupération du profil sérialisé
-     * @param context
-     */
-    private static void recupSerialize(Context context){
-        profil = (Profil)Serializer.deSerialize(nomFic, context);
-    }
-
-    /**
-     * Valorisation du profil
+     * Suppression d'un profil
      * @param profil
      */
-    public void setProfil(Profil profil){
-        Controle.profil = profil;
-        ((MainActivity)context).recupProfil();
+    public void delProfil(Profil profil){
+        accesDistant.envoi("suppr", profil.convertToJSONObject());
+        Log.d("profil", "************** profil json = "+profil.convertToJSONObject());
+        lesProfils.remove(profil);
     }
-
 }
